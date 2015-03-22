@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import refine
 from lxml import etree as ET
+import copy
 
 def sum(l):
     if len(l) == 1:
@@ -101,9 +102,10 @@ if __name__ == '__main__':
         for node in c:
             circs = refine.Node.getCircles(node,maxSearchDepth=2)
             if circs != []:
-                circles.append(circs)
-                circleNodes.append(c.pop(c.index(node)))
-                count += 1
+                if refine.Node.identifySame(circs,circles) == True:
+                    circles.append(circs)
+                    circleNodes.append(c.pop(c.index(node)))
+                    count += 1
         #circles += refine.Node.getCircles(node,maxSearchDepth=4)
     #for i in circles:
      #   print(i,IDtoNode[i[0][0]])
@@ -111,6 +113,13 @@ if __name__ == '__main__':
     print(len(container))
     print(IDtoNode[start.identifier])
     print(len(circleNodes))
+    print('\n',20*'=','\n')
+    print('CIRCLES')
+    print('\n',20*'=','\n')
+    for i in circles:
+        print(i)
+        #for ID in i[0]:
+            #print(IDtoNode[ID])
     routes = []
     for node in circleNodes:
         routes.append(refine.Node.pathFinder(start,node,IDtoNode))
@@ -120,9 +129,59 @@ if __name__ == '__main__':
         for ID in route:
             print(IDtoNode[ID])
     #print(IDtoNode[10])#,'\n',IDtoNode[41])
+    #append circle node to route
+    for route in routes:
+        print(route)
+        for circ in circles:
+            if route[-1] in circ:
+                print('\t',circ)
+                for c in circ:
+                    if c not in route:
+                        route.append(c)
+                print('\t new route',route)
+    #manipulate state attributes
+    newRoutes = []
+    for route in routes:
+        newRoute = []
+        for node in route:
+            newState = copy.deepcopy(IDtoNode[node].state)
+            for actions in newState:
+                #no multiple nextStates, only one
+                #so remove unused nextStates
+                seen = False
+                if 'type' in actions.attrib and actions.attrib['type'] == 'changeState':
+                    for posNext in route:
+                        if IDtoNode[posNext].name == actions.attrib['ref']:
+                            seen = True
+                    if seen == False:
+                        newState.remove(actions)
+                    else:
+                        if 'when' in actions.attrib:
+                            del actions.attrib['when']
+                #only one nextState -> no randomness
+                if 'onStart' in actions.attrib:
+                    newState.remove(actions)
+            newRoute.append(newState)
+        newRoutes.append(newRoute)
+    #create new statemodel consisting of
+    #circle and route to circle
     newStateModel = ET.Element('StateModel')
-    for node in routes[0]:
-        newStateModel.append(IDtoNode[node].state)
+    for state in newRoutes[0]:
+        newStateModel.append(state)
+    #insert new statemodel in old pit file
+    for child in sm:
+        sm.remove(child)
+    for child in newStateModel:
+        sm.append(child)
+    #for child in root:
+    #    if 'name' in child.attrib and child.attrib['name'] == 'StateModel':
+    #        print(child.attrib)#['name'])
+    #        for state in child:
+    #            child.remove(state)
+    #        for state in newStateModel:
+    #            child.append(state)
+    #tree = ET.ElementTree(newStateModel)
+    stat.pitTree.write('fileName', pretty_print=True)
     exit()
     print('reducing')
     trueCircs,dic = detectSame(circles)

@@ -48,7 +48,7 @@ class Node(object):
             if depth <= maxSearchDepth:
                 #print('circle detected: '+ str(path+[node.identifier]))
                 #print(path)
-                return [path + [node.identifier]]
+                return path + [node.identifier]
             return circles
         for child in node.nextNodes:
             circles += Node.getCircles(child,path[:]+[node.identifier],depth+1,maxSearchDepth)
@@ -69,6 +69,21 @@ class Node(object):
                         visited.append(nxt.identifier)
             else:
                 return path
+
+    def identifySame(circ, circles):
+        #print('testing ', circ,'on:')
+        #for i in circles:
+            #print(i)
+        new = False
+        for circs in circles:
+            for i in circ:
+                if i not in circs:
+                    new = True
+                    break
+            if new == False:
+                return False
+            new = False
+        return True
 
 
     def __init__(self,state):
