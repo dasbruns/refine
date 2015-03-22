@@ -1,0 +1,12 @@
+from .Stats import Stats
+from .Node import Node 
+
+def makeTrees():
+    stats = Stats()
+    #print(stats.tree)
+    print(stats.pitTree)
+    #root = stats.tree.getroot()
+    #pitRoot = stats.pitTree.getroot()
+    return stats
+
+
